@@ -5,9 +5,10 @@
 module Natnum where
 import Digit
 
-type Nat0   = Int
-data Natnum = L Digit           -- as in 'last digit'
-              | A Digit Natnum  -- as in 'a digit'
+type Nat0       = Int
+type CarryDigit = Digit
+data Natnum     = L Digit           -- as in 'last digit'
+                  | A Digit Natnum  -- as in 'a digit'
 
 instance Show Natnum where
   show (L d)   = show d
@@ -32,7 +33,20 @@ instance Enum Natnum where
                              factor  = 2^(numSize - 1)
                          in (fromEnum d) * factor + (fromEnum n)
 
+instance Num Natnum where
+  (+) n1 n2 = revert $ add (revert n1) (revert n2)
 
+
+{- Append a Digit at the end of a Natnum. -}
+append :: Digit -> Natnum -> Natnum
+{- Revert a Natnum. -}
+revert :: Natnum -> Natnum
+{- Carry table for addWithCarry. -}
+carryTable :: CarryDigit -> Digit -> Digit -> (CarryDigit, Digit)
+{- Add two Natnums together with carry from the least significant bit. -}
+addWithCarry :: CarryDigit -> Natnum -> Natnum -> Natnum
+{- Add two Natnums together from the least significant bit. -}
+add :: Natnum -> Natnum -> Natnum
 {- Build a Natnum from a list of digits. -}
 fromDigits :: [Digit] -> Natnum
 {- Transform an integer into a Natnum. -}
@@ -45,6 +59,37 @@ padWith :: Nat0 -> Natnum -> Natnum
 {- Pad Natnums to have same size. -}
 pad :: Natnum -> Natnum -> (Natnum, Natnum)
 
+
+append d1 (L d2)   = A d2 (L d1)
+append d1 (A d2 n) = A d2 (append d1 n)
+
+revert n@(L _) = n
+revert (A d n) = append d $ revert n
+
+carryTable Zero Zero Zero = (Zero, Zero)
+carryTable Zero Zero One  = (Zero, One )
+carryTable Zero One  Zero = (Zero, One )
+carryTable Zero One  One  = (One , Zero)
+carryTable One  Zero Zero = (Zero, One )
+carryTable One  Zero One  = (One , Zero)
+carryTable One  One  Zero = (One , Zero)
+carryTable One  One  One  = (One , One )
+
+addWithCarry c (L d1) (L d2) =
+    let (c', d') = carryTable c d1 d2
+    in if c' == Zero
+       then L d'
+       else A d' (L c')
+addWithCarry c (A d1 rest) (L d2) =
+    let (c', d') = carryTable c d1 d2
+    in A d' $ addWithCarry c' rest (L Zero)
+addWithCarry c n1@(L _) n2@(A _ _) =
+    addWithCarry c n2 n1
+addWithCarry c (A d1 rest1) (A d2 rest2) =
+    let (c', d') = carryTable c d1 d2
+    in A d' $ addWithCarry c' rest1 rest2
+
+add = addWithCarry Zero
 
 fromDigits []     = L Zero
 fromDigits [Zero] = L Zero
