@@ -92,8 +92,7 @@ addWithCarry c (A d1 rest1) (A d2 rest2) =
 add = addWithCarry Zero
 
 fromDigits []     = L Zero
-fromDigits [Zero] = L Zero
-fromDigits [One]  = L One
+fromDigits (d:[]) = L d
 fromDigits (d:ds) = A d (fromDigits ds)
 
 binary = binary' []
