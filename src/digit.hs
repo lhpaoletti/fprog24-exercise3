@@ -18,3 +18,9 @@ instance Eq Digit where
 instance Ord Digit where
   (<=) One  Zero = False
   (<=) _    _    = True
+
+instance Enum Digit where
+  toEnum 1 = One
+  toEnum _ = Zero
+  fromEnum Zero = 0
+  fromEnum One  = 1

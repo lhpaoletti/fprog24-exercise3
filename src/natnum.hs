@@ -25,7 +25,19 @@ instance Ord Natnum where
                   then True
                   else d1 <= d2 && n1' <= n2'
 
+instance Enum Natnum where
+  toEnum = binary
+  fromEnum (L d)       = fromEnum d
+  fromEnum num@(A d n) = let numSize = size num
+                             factor  = 2^(numSize - 1)
+                         in (fromEnum d) * factor + (fromEnum n)
 
+
+{- Build a Natnum from a list of digits. -}
+fromDigits :: [Digit] -> Natnum
+{- Transform an integer into a Natnum. -}
+binary  :: Int -> Natnum
+binary' :: [Digit] -> Int -> Natnum
 {- Get size of a Natnum word. -}
 size :: Natnum -> Int
 {- Pad a Natnum with a fixed number of zeros. -}
@@ -33,6 +45,18 @@ padWith :: Nat0 -> Natnum -> Natnum
 {- Pad Natnums to have same size. -}
 pad :: Natnum -> Natnum -> (Natnum, Natnum)
 
+
+fromDigits []     = L Zero
+fromDigits [Zero] = L Zero
+fromDigits [One]  = L One
+fromDigits (d:ds) = A d (fromDigits ds)
+
+binary = binary' []
+binary' ds 0 = fromDigits ds
+binary' ds i = let quotient = i `div` 2
+                   rest     = i `mod` 2
+                   d        = if rest == 1 then One else Zero
+               in binary' (d:ds) quotient
 
 size (L _)   = 1
 size (A _ n) = 1 + (size n)
