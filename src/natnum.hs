@@ -43,9 +43,9 @@ append :: Digit -> Natnum -> Natnum
 revert :: Natnum -> Natnum
 {- Carry table for addWithCarry. -}
 carryTable :: CarryDigit -> Digit -> Digit -> (CarryDigit, Digit)
-{- Add two Natnums together with carry from the least significant bit. -}
+{- Add two Natnums together with carry starting from the least significant bit. -}
 addWithCarry :: CarryDigit -> Natnum -> Natnum -> Natnum
-{- Add two Natnums together from the least significant bit. -}
+{- Add two Natnums together starting from the least significant bit. -}
 add :: Natnum -> Natnum -> Natnum
 {- Build a Natnum from a list of digits. -}
 fromDigits :: [Digit] -> Natnum
