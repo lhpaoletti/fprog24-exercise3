@@ -63,56 +63,22 @@ instance Read Natnum where
             [(d :: Digit, rest)] ->
                 case reads rest of
                     [(n :: Natnum, rest')] -> [(A d n, rest')]
-                    _                      -> []
+                    _ -> []
             _ -> []
 
 
 {- Apply transform function n times on a Natnum. -}
 apply :: (Natnum -> Natnum) -> Int -> Natnum -> Natnum
-{- Multiply two Natnums together. -}
-multiply  :: Natnum -> Natnum -> Natnum
-multiply' :: Natnum -> Natnum -> (Shift, AccNatnum)
-{- Borrow table for subtractWithBorrow.
- - Subtract the second Digit from the first based on the borrow of the last operation. -}
-borrowTable :: Borrow -> Digit -> Digit -> (Borrow, Digit)
-{- Subtract the second Natnum from the first using the borrow system.
- - Both Natnums must have the same size. -}
-subtractWithBorrow :: Natnum -> Natnum -> (Borrow, Natnum)
-{- Subtract the second Natnum from the first.
- - Result might contain leading Zeros. -}
-sub :: Natnum -> Natnum -> Natnum
-{- Truncate leading Zeros from a Natnum.
- - 0 is truncated to 0; 00 to 0; 000 to 0; ... -}
-trunc :: Natnum -> Natnum
-{- Append a Digit at the end of a Natnum. -}
-append :: Digit -> Natnum -> Natnum
-{- Revert a Natnum. -}
-revert :: Natnum -> Natnum
-{- Carry table for addWithCarry. -}
-carryTable :: CarryDigit -> Digit -> Digit -> (CarryDigit, Digit)
-{- Add two Natnums together with carry starting from the least significant bit. -}
-addWithCarry :: CarryDigit -> Natnum -> Natnum -> Natnum
-{- Add two Natnums together starting from the least significant bit. -}
-add :: Natnum -> Natnum -> Natnum
-{- Build a Natnum from a list of digits. -}
-fromDigits :: [Digit] -> Natnum
-{- Transform an integer into a Natnum. -}
-binary  :: Integral a => a -> Natnum
-binary' :: Integral a => [Digit] -> a -> Natnum
-{- Get size of a Natnum word. -}
-size :: Natnum -> Int
-{- Pad a Natnum with a fixed number of zeros. -}
-padWith :: Nat0 -> Natnum -> Natnum
-{- Pad Natnums to have same size. -}
-pad :: Natnum -> Natnum -> (Natnum, Natnum)
-
-
 apply _ 0 n = n
 apply f i n = apply f (i - 1) (f n)
 
+{- Multiply two Natnums together. -}
+multiply  :: Natnum -> Natnum -> Natnum
 multiply n1 n2 =
     let (_, result) = multiply' n1 n2
     in result
+
+multiply' :: Natnum -> Natnum -> (Shift, AccNatnum)
 multiply' n1 (L d) =
     if d == One
     then (1, n1)
@@ -126,6 +92,9 @@ multiply' n1 (A d n2) =
        then (shift + 1, acc + summand)
        else (shift + 1, acc)
 
+{- Borrow table for subtractWithBorrow.
+ - Subtract the second Digit from the first based on the borrow of the last operation. -}
+borrowTable :: Borrow -> Digit -> Digit -> (Borrow, Digit)
 borrowTable False Zero Zero = (False, Zero)
 borrowTable False Zero One  = (True , One )
 borrowTable False One  Zero = (False, One )
@@ -135,6 +104,9 @@ borrowTable True  Zero One  = (True , Zero)  -- propagate the borrow; it's actua
 borrowTable True  One  Zero = (False, Zero)  -- 1 got borrowed, so it becomes 0; it's actually 0 - 0 for the result
 borrowTable True  One  One  = (True , One )  -- 1 got borrowed; it becomes 0 - 1, so a borrow is needed
 
+{- Subtract the second Natnum from the first using the borrow system.
+ - Both Natnums must have the same size. -}
+subtractWithBorrow :: Natnum -> Natnum -> (Borrow, Natnum)
 subtractWithBorrow (L d1) (L d2) =
     let (borrow, d') = borrowTable False d1 d2
     in (borrow, L d')
@@ -143,6 +115,9 @@ subtractWithBorrow (A d1 rest1) (A d2 rest2) =
         (thisBorrow, d') = borrowTable restBorrow d1 d2
     in (thisBorrow, A d' n')
 
+{- Subtract the second Natnum from the first.
+ - Result might contain leading Zeros. -}
+sub :: Natnum -> Natnum -> Natnum
 sub n1 n2 =
     let (n1', n2')       = pad n1 n2
         (borrow, result) = subtractWithBorrow n1' n2'
@@ -150,18 +125,27 @@ sub n1 n2 =
        then L Zero  -- We don't have negative numbers in Natnum
        else result
 
+{- Truncate leading Zeros from a Natnum.
+ - 0 is truncated to 0; 00 to 0; 000 to 0; ... -}
+trunc :: Natnum -> Natnum
 trunc (L d) = L d
 trunc num@(A d n) =
     if d == Zero
     then trunc n
     else num
 
+{- Append a Digit at the end of a Natnum. -}
+append :: Digit -> Natnum -> Natnum
 append d1 (L d2)   = A d2 (L d1)
 append d1 (A d2 n) = A d2 (append d1 n)
 
+{- Revert a Natnum. -}
+revert :: Natnum -> Natnum
 revert n@(L _) = n
 revert (A d n) = append d $ revert n
 
+{- Carry table for addWithCarry. -}
+carryTable :: CarryDigit -> Digit -> Digit -> (CarryDigit, Digit)
 carryTable Zero Zero Zero = (Zero, Zero)
 carryTable Zero Zero One  = (Zero, One )
 carryTable Zero One  Zero = (Zero, One )
@@ -171,6 +155,8 @@ carryTable One  Zero One  = (One , Zero)
 carryTable One  One  Zero = (One , Zero)
 carryTable One  One  One  = (One , One )
 
+{- Add two Natnums together with carry starting from the least significant bit. -}
+addWithCarry :: CarryDigit -> Natnum -> Natnum -> Natnum
 addWithCarry c (L d1) (L d2) =
     let (c', d') = carryTable c d1 d2
     in if c' == Zero
@@ -185,13 +171,21 @@ addWithCarry c (A d1 rest1) (A d2 rest2) =
     let (c', d') = carryTable c d1 d2
     in A d' $ addWithCarry c' rest1 rest2
 
+{- Add two Natnums together starting from the least significant bit. -}
+add :: Natnum -> Natnum -> Natnum
 add = addWithCarry Zero
 
+{- Build a Natnum from a list of digits. -}
+fromDigits :: [Digit] -> Natnum
 fromDigits []     = L Zero
 fromDigits (d:[]) = L d
 fromDigits (d:ds) = A d (fromDigits ds)
 
+{- Transform an integer into a Natnum. -}
+binary  :: Integral a => a -> Natnum
 binary = binary' []
+
+binary' :: Integral a => [Digit] -> a -> Natnum
 binary' ds 0 = fromDigits ds
 binary' ds i =
     let quotient = i `div` 2
@@ -199,12 +193,18 @@ binary' ds i =
         d        = if rest == 1 then One else Zero
     in binary' (d:ds) quotient
 
+{- Get size of a Natnum word. -}
+size :: Natnum -> Int
 size (L _)   = 1
 size (A _ n) = 1 + (size n)
 
+{- Pad a Natnum with a fixed number of zeros. -}
+padWith :: Nat0 -> Natnum -> Natnum
 padWith 0 n = n
 padWith i n = padWith (i - 1) (A Zero n)
 
+{- Pad Natnums to have same size. -}
+pad :: Natnum -> Natnum -> (Natnum, Natnum)
 pad n1@(L _) n2@(L _) = (n1, n2)
 pad n1 n2
   | size1 < size2 = let padded1 = padWith (size2 - size1) n1
