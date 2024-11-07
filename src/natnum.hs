@@ -51,6 +51,21 @@ instance Num Natnum where
     signum l = l
     fromInteger = binary
 
+instance Bounded Natnum where
+    minBound = L Zero
+    maxBound = error "There's no upper bound for Natnums"  -- Theoretically there should be no upper bound; infinite
+
+instance Read Natnum where
+    readsPrec _ input =
+        let input' = dropWhile (== ' ') input
+        in case reads input' of
+            [(d :: Digit, ""  )] -> [(L d, "")]
+            [(d :: Digit, rest)] ->
+                case reads rest of
+                    [(n :: Natnum, rest')] -> [(A d n, rest')]
+                    _                      -> []
+            _ -> []
+
 
 {- Apply transform function n times on a Natnum. -}
 apply :: (Natnum -> Natnum) -> Int -> Natnum -> Natnum
