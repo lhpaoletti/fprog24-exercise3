@@ -11,16 +11,23 @@ type Borrow     = Bool
 type Shift      = Nat0
 data Natnum     = L Digit           -- as in 'last digit'
                   | A Digit Natnum  -- as in 'a digit'
+data Natnum'    = NI Natnum         -- NI as in 'new identity'
 type AccNatnum  = Natnum
 
 instance Show Natnum where
     show (L d)   = show d
     show (A d n) = show d ++ show n
+instance Show Natnum' where
+    show (NI n) = show $ fromEnum n
 
 instance Eq Natnum where
     (==) (L d1)    (L d2)    = d1 == d2
     (==) (A d1 n1) (A d2 n2) = d1 == d2 && n1 == n2
-    (==) _         _         = False
+    (==) n1        n2        =
+        let (n1', n2') = pad n1 n2
+        in n1' == n2'
+instance Eq Natnum' where
+    (==) (NI n1) (NI n2) = n1 == n2
 
 instance Ord Natnum where
     (<=) (L d1) (L d2) = d1 <= d2
