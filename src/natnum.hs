@@ -221,3 +221,11 @@ pad n1 n2
   | otherwise     = (n1, n2)
     where size1 = size n1
           size2 = size n2
+
+
+-- A3 --
+
+c  :: Natnum  -> Natnum'
+c = NI
+c' :: Natnum' -> Natnum
+c' (NI n) = n
