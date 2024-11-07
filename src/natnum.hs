@@ -223,9 +223,19 @@ pad n1 n2
           size2 = size n2
 
 
--- A3 --
+-- A3 & A4 --
 
 c  :: Natnum  -> Natnum'
 c = NI
 c' :: Natnum' -> Natnum
 c' (NI n) = n
+
+c1 :: Nat0   -> Natnum
+c1 = toEnum
+c2 :: Natnum -> Nat0
+c2 = fromEnum
+
+c3 :: Nat0    -> Natnum'
+c3 = NI . c1
+c4 :: Natnum' -> Nat0
+c4 (NI n) = c2 n
