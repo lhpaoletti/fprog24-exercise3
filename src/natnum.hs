@@ -11,7 +11,7 @@ type Borrow     = Bool
 type Shift      = Nat0
 data Natnum     = L Digit           -- as in 'last digit'
                   | A Digit Natnum  -- as in 'a digit'
-data Natnum'    = NI Natnum         -- NI as in 'new identity'
+newtype Natnum' = NI Natnum         -- NI as in 'new identity'
 type AccNatnum  = Natnum
 
 instance Show Natnum where
