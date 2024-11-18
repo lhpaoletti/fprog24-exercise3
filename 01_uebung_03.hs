@@ -98,12 +98,12 @@ instance Read NatZahl where
             _ -> []
 
 
-{- Apply transform function n times on a Natnum. -}
+{- Apply transform function n times on a NatZahl. -}
 apply :: (NatZahl -> NatZahl) -> Int -> NatZahl -> NatZahl
 apply _ 0 n = n
 apply f i n = apply f (i - 1) (f n)
 
-{- Multiply two Natnums together. -}
+{- Multiply two NatZahls together. -}
 multiply :: NatZahl -> NatZahl -> NatZahl
 multiply n1 n2 =
     let (_, result) = multiply' n1 n2
@@ -135,8 +135,8 @@ borrowTable True  Null Eins = (True , Null)  -- propagate the borrow; it's actua
 borrowTable True  Eins Null = (False, Null)  -- 1 got borrowed, so it becomes 0; it's actually 0 - 0 for the result
 borrowTable True  Eins Eins = (True , Eins)  -- 1 got borrowed; it becomes 0 - 1, so a borrow is needed
 
-{- Subtract the second Natnum from the first using the borrow system.
- - Both Natnums must have the same size. -}
+{- Subtract the second NatZahl from the first using the borrow system.
+ - Both NatZahls must have the same size. -}
 subtractWithBorrow :: NatZahl -> NatZahl -> (Borrow, NatZahl)
 subtractWithBorrow (L d1) (L d2) =
     let (borrow, d') = borrowTable False d1 d2
@@ -146,17 +146,17 @@ subtractWithBorrow (E d1 rest1) (E d2 rest2) =
         (thisBorrow, d') = borrowTable restBorrow d1 d2
     in (thisBorrow, E d' n')
 
-{- Subtract the second Natnum from the first.
+{- Subtract the second NatZahl from the first.
  - Result might contain leading Nulls. -}
 sub :: NatZahl -> NatZahl -> NatZahl
 sub n1 n2 =
     let (n1', n2')       = pad n1 n2
         (borrow, result) = subtractWithBorrow n1' n2'
     in if borrow == True
-       then L Null  -- We don't have negative numbers in Natnum
+       then L Null  -- We don't have negative numbers in NatZahl
        else result
 
-{- Truncate leading Nulls from a Natnum.
+{- Truncate leading Nulls from a NatZahl.
  - 0 is truncated to 0; 00 to 0; 000 to 0; ... -}
 trunc :: NatZahl -> NatZahl
 trunc (L d) = L d
@@ -165,12 +165,12 @@ trunc num@(E d n) =
     then trunc n
     else num
 
-{- Append a Ziffer at the end of a Natnum. -}
+{- Append a Ziffer at the end of a NatZahl. -}
 append :: Ziffer -> NatZahl -> NatZahl
 append d1 (L d2)   = E d2 (L d1)
 append d1 (E d2 n) = E d2 (append d1 n)
 
-{- Revert a Natnum. -}
+{- Revert a NatZahl. -}
 revert :: NatZahl -> NatZahl
 revert n@(L _) = n
 revert (E d n) = append d $ revert n
@@ -186,7 +186,7 @@ carryTable Eins Null Eins = (Eins, Null)
 carryTable Eins Eins Null = (Eins, Null)
 carryTable Eins Eins Eins = (Eins, Eins)
 
-{- Add two Natnums together with carry starting from the least significant bit. -}
+{- Add two NatZahls together with carry starting from the least significant bit. -}
 addWithCarry :: CarryZiffer -> NatZahl -> NatZahl -> NatZahl
 addWithCarry c (L d1) (L d2) =
     let (c', d') = carryTable c d1 d2
@@ -202,17 +202,17 @@ addWithCarry c (E d1 rest1) (E d2 rest2) =
     let (c', d') = carryTable c d1 d2
     in E d' $ addWithCarry c' rest1 rest2
 
-{- Add two Natnums together starting from the least significant bit. -}
+{- Add two NatZahls together starting from the least significant bit. -}
 add :: NatZahl -> NatZahl -> NatZahl
 add = addWithCarry Null
 
-{- Build a Natnum from a list of digits. -}
+{- Build a NatZahl from a list of digits. -}
 fromZiffers :: [Ziffer] -> NatZahl
 fromZiffers []     = L Null
 fromZiffers (d:[]) = L d
 fromZiffers (d:ds) = E d (fromZiffers ds)
 
-{- Transform an integer into a Natnum. -}
+{- Transform an integer into a NatZahl. -}
 binary :: Integral a => a -> NatZahl
 binary = binary' []
 
@@ -224,17 +224,17 @@ binary' ds i =
         d        = if rest == 1 then Eins else Null
     in binary' (d:ds) quotient
 
-{- Get size of a Natnum word. -}
+{- Get size of a NatZahl word. -}
 size :: NatZahl -> Int
 size (L _)   = 1
 size (E _ n) = 1 + (size n)
 
-{- Pad a Natnum with a fixed number of zeros. -}
+{- Pad a NatZahl with a fixed number of zeros. -}
 padWith :: Nat0 -> NatZahl -> NatZahl
 padWith 0 n = n
 padWith i n = padWith (i - 1) (E Null n)
 
-{- Pad Natnums to have same size. -}
+{- Pad NatZahls to have same size. -}
 pad :: NatZahl -> NatZahl -> (NatZahl, NatZahl)
 pad n1@(L _) n2@(L _) = (n1, n2)
 pad n1 n2
